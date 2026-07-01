@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(222, 47%, 4%);
+  --color-card: hsl(222, 47%, 7%);
+  --color-cardHover: hsl(222, 47%, 11%);
+  --color-card-hover: hsl(222, 47%, 11%);
+  --color-border: hsl(222, 30%, 15%);
+  --color-textMuted: hsl(215, 20%, 65%);
+  --color-text-muted: hsl(215, 20%, 65%);
+  --color-textDefault: hsl(210, 40%, 98%);
+  --color-text-default: hsl(210, 40%, 98%);
+  
+  --color-status-healthy: hsl(142, 70%, 45%);
+  --color-status-alert: hsl(346, 80%, 50%);
+  --color-status-warning: hsl(45, 93%, 47%);
+  --color-status-standby: hsl(217, 91%, 60%);
+  --color-status-gray: hsl(215, 15%, 30%);
+
+  --color-brand-primary: hsl(217, 91%, 60%);
+  --color-brand-glow: rgba(59, 130, 246, 0.15);
+
+  --font-sans: "Outfit", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --shadow-glass-glow: 0 0 20px 0 rgba(59, 130, 246, 0.2);
+
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-border-glow: borderGlow 4s linear infinite;
+
+  @keyframes borderGlow {
+    0%, 100% { border-color: hsl(222, 30%, 15%); }
+    50% { border-color: hsl(217, 91%, 60%); }
+  }
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-textDefault);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(217, 91%, 60%, 0.03) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(346, 80%, 50%, 0.02) 0, transparent 40%);
+}
+
+/* Scrollbar Customization - Bloomberg Terminal Style */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  transition: all 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-primary);
+}
+
+/* Glassmorphism Panel Utilities */
+.glass-panel {
+  background-color: hsla(222, 47%, 7%, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-glass);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-interactive {
+  background-color: hsla(222, 47%, 7%, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-glass);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.glass-panel-interactive:hover {
+  background-color: var(--color-cardHover);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: var(--shadow-glass-glow);
+}
+
+/* Status Indicator Dot Blinking */
+.status-ping {
+  display: flex;
+  height: 8px;
+  width: 8px;
+  position: relative;
+}
+
+/* Glow effects */
+.glow-green {
+  box-shadow: 0 0 15px 0 hsla(142, 70%, 45%, 0.35);
+}
+
+.glow-red {
+  box-shadow: 0 0 15px 0 hsla(346, 80%, 50%, 0.35);
+}
+
+.glow-yellow {
+  box-shadow: 0 0 15px 0 hsla(45, 93%, 47%, 0.35);
+}
+
+/* React Flow custom panel overrides */
+.react-flow__renderer {
+  background-color: var(--color-background);
+}
+
+.react-flow__handle {
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--color-background);
+  background-color: var(--color-textMuted);
+}
+
+.react-flow__handle:hover {
+  background-color: var(--color-brand-primary);
+}
+
+.react-flow__edge-path {
+  stroke-width: 2px;
+}
+
+.react-flow__controls {
+  background-color: var(--color-card) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: var(--shadow-glass) !important;
+}
+
+.react-flow__controls-button {
+  border-bottom: 1px solid var(--color-border) !important;
+  fill: var(--color-textDefault) !important;
+}
+
+.react-flow__controls-button:hover {
+  background-color: var(--color-cardHover) !important;
+}

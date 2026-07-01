@@ -15,6 +15,12 @@ class SQLiteRepository(SupplyChainRepository):
     """
 
     def __init__(self, db_path: str):
+        import os
+        if not os.path.exists(db_path) or os.path.getsize(db_path) == 0:
+            raise FileNotFoundError(
+                f"SQLite database file not found or empty at expected path: '{db_path}'. "
+                "Please seed the database first by running: python scripts/seed_db.py"
+            )
         self.db_path = db_path
         self._init_db()
 
