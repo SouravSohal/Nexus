@@ -1,7 +1,7 @@
 from backend.app.core.config import settings
 from backend.app.infrastructure.db.sqlite_repo import SQLiteRepository
 from backend.app.infrastructure.graph.networkx_engine import NetworkXGraphEngine
-from backend.app.infrastructure.external.gemini_client import GeminiClient
+from backend.app.infrastructure.external.ai.orchestrator import AIOrchestrator
 from backend.app.domain.services.simulation_engine import TemporalSimulationEngine
 from backend.app.domain.services.decision_engine import DecisionEngine
 from backend.app.application.event_bus import EventBus
@@ -12,7 +12,7 @@ repo = SQLiteRepository(settings.DB_PATH)
 graph_engine = NetworkXGraphEngine()
 sim_engine = TemporalSimulationEngine(graph_engine)
 decision_engine = DecisionEngine()
-ai_client = GeminiClient()
+ai_client = AIOrchestrator()
 event_bus = EventBus()
 
 # Application Orchestrator
@@ -31,3 +31,7 @@ def get_orchestrator() -> EventOrchestrator:
 def get_repository() -> SQLiteRepository:
     """Dependency provider for the database repository."""
     return repo
+
+def get_ai_client() -> AIOrchestrator:
+    """Dependency provider for the AI orchestrator."""
+    return ai_client

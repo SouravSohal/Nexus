@@ -67,7 +67,11 @@ export const useNexusApi = () => {
       resetSystem: () => 
         fetchJson<{ status: string; message: string }>("/events/system/reset", {
           method: "POST"
-        })
+        }),
+
+      /** Get active AI engine provider state */
+      getAiStatus: () => 
+        fetchJson<{ provider: string }>("/events/system/ai-status")
     };
   }, []);
 };

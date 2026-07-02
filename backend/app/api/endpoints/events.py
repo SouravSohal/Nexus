@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Dict
-from backend.app.api.dependencies import get_orchestrator, get_repository
+from backend.app.api.dependencies import get_orchestrator, get_repository, get_ai_client
 from backend.app.application.event_orchestrator import EventOrchestrator
+from backend.app.infrastructure.external.ai.orchestrator import AIOrchestrator
 from backend.app.domain.interfaces.repository import SupplyChainRepository
 from backend.app.api.mappers import (
     map_event_to_response,
@@ -126,3 +127,8 @@ def reset_network(orchestrator: EventOrchestrator = Depends(get_orchestrator)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to reset twin state: {str(e)}"
         )
+
+@router.get("/system/ai-status", status_code=status.HTTP_200_OK)
+def get_ai_status(ai_client: AIOrchestrator = Depends(get_ai_client)):
+    """Retrieves active AI engine provider state (gemini, ollama, offline)."""
+    return {"provider": ai_client.get_provider_status()}

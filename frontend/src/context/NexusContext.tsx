@@ -21,6 +21,7 @@ interface NexusContextType {
   timelinePlaying: boolean;
   loading: boolean;
   error: string | null;
+  aiStatus: string;
   
   // Actions
   fetchSystemState: () => Promise<void>;
@@ -61,6 +62,7 @@ export const NexusProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Loading & Global Errors
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiStatus, setAiStatus] = useState<string>("gemini");
 
   // Fetch baseline network data
   const fetchSystemState = useCallback(async () => {
@@ -75,6 +77,13 @@ export const NexusProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setEdges(graph.edges);
       setMetrics(dbMetrics);
       setEvents(dbEvents);
+
+      try {
+        const aiStatusData = await api.getAiStatus();
+        setAiStatus(aiStatusData.provider);
+      } catch {
+        setAiStatus("offline");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to load Digital Twin state.");
     } finally {
@@ -259,6 +268,7 @@ export const NexusProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       timelinePlaying,
       loading,
       error,
+      aiStatus,
       
       fetchSystemState,
       ingestNewsAlert,

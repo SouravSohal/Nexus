@@ -8,7 +8,7 @@ import { TimelineScrubber } from "./components/Dashboard/TimelineScrubber";
 import { Cpu, Wifi, AlertTriangle } from "lucide-react";
 
 const DashboardContent: React.FC = () => {
-  const { loading, error } = useNexus();
+  const { loading, error, aiStatus } = useNexus();
 
   return (
     <div className="flex flex-col h-screen w-screen p-4 md:p-6 bg-background relative overflow-hidden">
@@ -44,6 +44,29 @@ const DashboardContent: React.FC = () => {
             <span className="text-textMuted/60">SYS_TIME: 2026-07-01 UTC</span>
           </div>
           
+          {/* AI Engine Provider Status */}
+          <div className="flex items-center gap-2 border border-border bg-card/45 px-3 py-1.5 rounded-lg text-xxs font-mono text-textMuted shadow-sm">
+            <span className="text-textMuted/60">AI:</span>
+            {aiStatus === "gemini" && (
+              <>
+                <span className="font-semibold text-textDefault">Gemini</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-status-healthy glow-green" />
+              </>
+            )}
+            {aiStatus === "ollama" && (
+              <>
+                <span className="font-semibold text-textDefault">Local AI</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-status-warning glow-yellow animate-pulse" />
+              </>
+            )}
+            {aiStatus === "offline" && (
+              <>
+                <span className="font-semibold text-textDefault">Offline</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-status-alert glow-red animate-pulse" />
+              </>
+            )}
+          </div>
+
           <div className="flex items-center gap-2 border border-border bg-card/45 px-3 py-1.5 rounded-lg text-xxs font-mono text-textMuted shadow-sm">
             <Wifi className="w-3.5 h-3.5 text-status-healthy animate-pulse" />
             <span className="font-semibold text-textDefault">TELEMETRY: ONLINE</span>
