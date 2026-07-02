@@ -153,7 +153,11 @@ export const GraphCanvas: React.FC = () => {
   // Convert context nodes to React Flow Node objects
   const flowNodes = useMemo(() => {
     return nodes.map(node => {
-      const isTarget = activeEvent?.affected_node_id === node.id;
+      const isTarget = activeEvent
+        ? (activeEvent.affected_nodes && activeEvent.affected_nodes.length > 0
+            ? activeEvent.affected_nodes.some(an => an.node_id === node.id)
+            : activeEvent.affected_node_id === node.id)
+        : false;
       const isStandby = node.id === "port-rotterdam";
       const pos = nodePositions[node.id] || { x: 300, y: 250 };
       
@@ -327,7 +331,7 @@ export const GraphCanvas: React.FC = () => {
           {selectedNode.type !== "PRODUCT" && (
             <div className="flex flex-col gap-1 border-t border-border/30 pt-2">
               <div className="flex justify-between">
-                <span className="text-textMuted">Inventory Level:</span>
+                <span className="text-textMuted">Stockpile Level:</span>
                 <span className="text-textDefault font-semibold">
                   {selectedNode.inventory.toFixed(0)} / {selectedNode.capacity.toFixed(0)}
                 </span>
@@ -341,7 +345,7 @@ export const GraphCanvas: React.FC = () => {
                 />
               </div>
               <div className="flex justify-between text-[9px] text-textMuted/80">
-                <span>Safety Stock Limit:</span>
+                <span>Buffer Threshold Limit:</span>
                 <span className="text-status-warning font-semibold">{selectedNode.safety_stock.toFixed(0)} units</span>
               </div>
             </div>
@@ -349,7 +353,7 @@ export const GraphCanvas: React.FC = () => {
           
           <div className="border-t border-border/30 pt-2 flex flex-col gap-1 text-[9.5px]">
             <div className="flex justify-between">
-              <span className="text-textMuted">Daily Operating Cost:</span>
+              <span className="text-textMuted">Daily Operation Overhead:</span>
               <span className="text-textDefault">${selectedNode.base_cost.toLocaleString()}</span>
             </div>
             {selectedNode.type !== "PRODUCT" && (

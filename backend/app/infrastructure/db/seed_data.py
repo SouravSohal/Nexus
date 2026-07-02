@@ -1,12 +1,12 @@
 from typing import List
 from backend.app.domain.models.network import Node, Edge, NodeType, EdgeType
 
-# Seed nodes representing an expanded multi-tier high-tech electronics supply chain (25 nodes)
+# Seed nodes representing an expanded critical infrastructure and community resilience network (33 nodes)
 SEED_NODES: List[Node] = [
-    # --- PATH A: MAIN TAIWAN-BELGIUM-MUNICH ECU CHAIN (Original 9 nodes for disruption demo) ---
+    # --- PATH A: MAIN TAIWAN-BELGIUM-MUNICH SYSTEM ---
     Node(
         id="supplier-silicon",
-        name="Silicon Valley Taiwan Ltd",
+        name="Hsinchu Advanced Materials Depot",
         type=NodeType.SUPPLIER,
         location="Hsinchu, Taiwan",
         latitude=24.78,
@@ -19,11 +19,11 @@ SEED_NODES: List[Node] = [
         safety_stock=200.0,
         daily_consumption=40.0,
         replenishment_rate=40.0,
-        metadata={"material": "Purified Silicon Ingots", "supplier_tier": 2}
+        metadata={"material": "Refined Silicon Wafers", "partner_tier": 2}
     ),
     Node(
         id="factory-wafer",
-        name="Taichung Wafer Fabrication Inc",
+        name="Taichung Precision Sourcing Fab",
         type=NodeType.FACTORY,
         location="Taichung, Taiwan",
         latitude=24.14,
@@ -36,11 +36,11 @@ SEED_NODES: List[Node] = [
         safety_stock=60.0,
         daily_consumption=40.0,
         replenishment_rate=40.0,
-        metadata={"material": "8nm Semiconductor Wafers", "factory_tier": 1}
+        metadata={"material": "Advanced Component Blocks", "ops_tier": 1}
     ),
     Node(
         id="port-kaohsiung",
-        name="Port of Kaohsiung",
+        name="Port of Kaohsiung Transit Hub",
         type=NodeType.PORT,
         location="Kaohsiung, Taiwan",
         latitude=22.62,
@@ -57,7 +57,7 @@ SEED_NODES: List[Node] = [
     ),
     Node(
         id="port-antwerp",
-        name="Port of Antwerp-Bruges",
+        name="Port of Antwerp Emergency Gateway",
         type=NodeType.PORT,
         location="Antwerp, Belgium",
         latitude=51.21,
@@ -74,7 +74,7 @@ SEED_NODES: List[Node] = [
     ),
     Node(
         id="port-rotterdam",
-        name="Port of Rotterdam",
+        name="Port of Rotterdam Alternative Terminal",
         type=NodeType.PORT,
         location="Rotterdam, Netherlands",
         latitude=51.92,
@@ -91,7 +91,7 @@ SEED_NODES: List[Node] = [
     ),
     Node(
         id="warehouse-munich",
-        name="Munich Logistics Hub",
+        name="Munich Regional Logistics Hub",
         type=NodeType.WAREHOUSE,
         location="Munich, Germany",
         latitude=48.13,
@@ -108,7 +108,7 @@ SEED_NODES: List[Node] = [
     ),
     Node(
         id="factory-assembly",
-        name="Munich Cognitive Electronics Factory",
+        name="Munich Essential Operations Center",
         type=NodeType.FACTORY,
         location="Munich, Germany",
         latitude=48.136,
@@ -121,11 +121,11 @@ SEED_NODES: List[Node] = [
         safety_stock=40.0,
         daily_consumption=40.0,
         replenishment_rate=40.0,
-        metadata={"assembly_product": "Nexus Automotive ECUs"}
+        metadata={"assembly_resource": "Critical Resource Modules"}
     ),
     Node(
         id="distributor-europe",
-        name="Euro-DC Frankfurt",
+        name="Frankfurt Emergency Distribution Center",
         type=NodeType.DISTRIBUTION_CENTER,
         location="Frankfurt, Germany",
         latitude=50.11,
@@ -142,9 +142,9 @@ SEED_NODES: List[Node] = [
     ),
     Node(
         id="product-nexus-ecu",
-        name="Nexus Autopilot ECU v5",
+        name="Emergency Supply Resource Units",
         type=NodeType.PRODUCT,
-        location="Global Market",
+        location="European Sector",
         latitude=52.52,
         longitude=13.40,
         base_cost=0.0,
@@ -155,13 +155,13 @@ SEED_NODES: List[Node] = [
         safety_stock=50.0,
         daily_consumption=40.0,
         replenishment_rate=40.0,
-        metadata={"unit_sale_price": 2500.0}
+        metadata={"unit_equivalent_value": 2500.0}
     ),
 
-    # --- PATH B: JAPAN-GERMANY-STUTTGART ECU PRO CHAIN (Parallel healthy pipeline) ---
+    # --- PATH B: JAPAN-GERMANY-STUTTGART PIPELINE ---
     Node(
         id="supplier-silicon-jp",
-        name="Shin-Etsu Silicon Japan",
+        name="Tokyo Strategic Resource Partner",
         type=NodeType.SUPPLIER,
         location="Tokyo, Japan",
         latitude=35.67,
@@ -174,11 +174,11 @@ SEED_NODES: List[Node] = [
         safety_stock=200.0,
         daily_consumption=40.0,
         replenishment_rate=40.0,
-        metadata={"material": "Ultra-pure Polysilicon", "supplier_tier": 2}
+        metadata={"material": "Specialized Compounds", "partner_tier": 2}
     ),
     Node(
         id="factory-wafer-jp",
-        name="Kumamoto Semiconductor Fab",
+        name="Kumamoto Precision Assembly Plant",
         type=NodeType.FACTORY,
         location="Kumamoto, Japan",
         latitude=32.78,
@@ -191,11 +191,11 @@ SEED_NODES: List[Node] = [
         safety_stock=60.0,
         daily_consumption=40.0,
         replenishment_rate=40.0,
-        metadata={"material": "12nm Wafers", "factory_tier": 1}
+        metadata={"material": "Medical Sourcing Circuits", "ops_tier": 1}
     ),
     Node(
         id="port-yokohama",
-        name="Port of Yokohama",
+        name="Port of Yokohama Transit Hub",
         type=NodeType.PORT,
         location="Yokohama, Japan",
         latitude=35.44,
@@ -212,7 +212,7 @@ SEED_NODES: List[Node] = [
     ),
     Node(
         id="port-hamburg",
-        name="Port of Hamburg",
+        name="Port of Hamburg Emergency Gateway",
         type=NodeType.PORT,
         location="Hamburg, Germany",
         latitude=53.54,
@@ -229,7 +229,7 @@ SEED_NODES: List[Node] = [
     ),
     Node(
         id="warehouse-stuttgart",
-        name="Stuttgart Logistics Hub",
+        name="Stuttgart Regional Logistics Hub",
         type=NodeType.WAREHOUSE,
         location="Stuttgart, Germany",
         latitude=48.77,
@@ -246,7 +246,7 @@ SEED_NODES: List[Node] = [
     ),
     Node(
         id="factory-assembly-stuttgart",
-        name="Stuttgart ECU Assembly Plant",
+        name="Stuttgart Essential Operations Center",
         type=NodeType.FACTORY,
         location="Stuttgart, Germany",
         latitude=48.78,
@@ -259,11 +259,11 @@ SEED_NODES: List[Node] = [
         safety_stock=40.0,
         daily_consumption=40.0,
         replenishment_rate=40.0,
-        metadata={"assembly_product": "Nexus ECU Pro"}
+        metadata={"assembly_resource": "Advanced Disaster-Response Kits"}
     ),
     Node(
         id="distributor-europe-stuttgart",
-        name="Euro-DC Stuttgart",
+        name="Stuttgart Emergency Distribution Center",
         type=NodeType.DISTRIBUTION_CENTER,
         location="Stuttgart, Germany",
         latitude=48.79,
@@ -280,7 +280,7 @@ SEED_NODES: List[Node] = [
     ),
     Node(
         id="product-nexus-ecu-pro",
-        name="Nexus ECU Pro",
+        name="Emergency Response Units Pro",
         type=NodeType.PRODUCT,
         location="Global Pro Market",
         latitude=52.52,
@@ -293,13 +293,13 @@ SEED_NODES: List[Node] = [
         safety_stock=50.0,
         daily_consumption=40.0,
         replenishment_rate=40.0,
-        metadata={"unit_sale_price": 3200.0}
+        metadata={"unit_equivalent_value": 3200.0}
     ),
 
-    # --- STANDBY ALTERNATIVES ---
+    # --- STANDBY ALTERNATIVES & BACKUP DEPOTS ---
     Node(
         id="supplier-silicon-de",
-        name="Wacker Silicon Germany",
+        name="Burghausen Strategic Materials Partner",
         type=NodeType.SUPPLIER,
         location="Burghausen, Germany",
         latitude=48.17,
@@ -312,11 +312,11 @@ SEED_NODES: List[Node] = [
         safety_stock=100.0,
         daily_consumption=0.0,
         replenishment_rate=0.0,
-        metadata={"material": "Polysilicon", "supplier_tier": 2}
+        metadata={"material": "Raw Sourcing Reserves", "partner_tier": 2}
     ),
     Node(
         id="factory-wafer-de",
-        name="Dresden Wafer Fabrication",
+        name="Dresden Advanced Operations Center",
         type=NodeType.FACTORY,
         location="Dresden, Germany",
         latitude=51.05,
@@ -329,11 +329,11 @@ SEED_NODES: List[Node] = [
         safety_stock=45.0,
         daily_consumption=0.0,
         replenishment_rate=0.0,
-        metadata={"material": "Alternative Wafers", "factory_tier": 1}
+        metadata={"material": "Alternative Component Assembly", "ops_tier": 1}
     ),
     Node(
         id="port-shanghai",
-        name="Port of Shanghai",
+        name="Port of Shanghai Gateway",
         type=NodeType.PORT,
         location="Shanghai, China",
         latitude=31.23,
@@ -350,7 +350,7 @@ SEED_NODES: List[Node] = [
     ),
     Node(
         id="warehouse-frankfurt",
-        name="Frankfurt Hub",
+        name="Frankfurt Strategic Reserve Hub",
         type=NodeType.WAREHOUSE,
         location="Frankfurt, Germany",
         latitude=50.12,
@@ -366,10 +366,10 @@ SEED_NODES: List[Node] = [
         metadata={"safety_buffer_days": 3}
     ),
 
-    # --- END AUTOMOTIVE OEM CONSUMERS ---
+    # --- COMMUNITY RECIPIENTS & EMERGENCIES ---
     Node(
         id="customer-bmw",
-        name="BMW Group Munich",
+        name="Munich Regional Hospital Network",
         type=NodeType.PRODUCT,
         location="Munich, Germany",
         latitude=48.177,
@@ -382,11 +382,11 @@ SEED_NODES: List[Node] = [
         safety_stock=40.0,
         daily_consumption=20.0,
         replenishment_rate=20.0,
-        metadata={"brand": "BMW Automotive"}
+        metadata={"sector": "Critical Public Health"}
     ),
     Node(
         id="customer-audi",
-        name="Audi AG Ingolstadt",
+        name="Bavarian Public Health Distribution",
         type=NodeType.PRODUCT,
         location="Ingolstadt, Germany",
         latitude=48.782,
@@ -399,11 +399,11 @@ SEED_NODES: List[Node] = [
         safety_stock=40.0,
         daily_consumption=20.0,
         replenishment_rate=20.0,
-        metadata={"brand": "Audi Automotive"}
+        metadata={"sector": "Emergency Medical Logistics"}
     ),
     Node(
         id="customer-mercedes",
-        name="Mercedes-Benz Stuttgart",
+        name="Stuttgart Disaster Relief Coordination",
         type=NodeType.PRODUCT,
         location="Stuttgart, Germany",
         latitude=48.790,
@@ -416,11 +416,11 @@ SEED_NODES: List[Node] = [
         safety_stock=40.0,
         daily_consumption=20.0,
         replenishment_rate=20.0,
-        metadata={"brand": "Mercedes Automotive"}
+        metadata={"sector": "Disaster Relief Management"}
     ),
     Node(
         id="customer-vw",
-        name="Volkswagen AG Wolfsburg",
+        name="Saxony Metro Transit Operations",
         type=NodeType.PRODUCT,
         location="Wolfsburg, Germany",
         latitude=52.420,
@@ -433,7 +433,145 @@ SEED_NODES: List[Node] = [
         safety_stock=40.0,
         daily_consumption=20.0,
         replenishment_rate=20.0,
-        metadata={"brand": "VW Automotive"}
+        metadata={"sector": "Public Transport Grid"}
+    ),
+
+    # --- EXPANDED RESILIENCE NODES (Bringing total to 33 nodes) ---
+    Node(
+        id="supplier-singapore",
+        name="Singapore Specialty Sourcing Partner",
+        type=NodeType.SUPPLIER,
+        location="Singapore",
+        latitude=1.35,
+        longitude=103.82,
+        base_cost=14000.0,
+        capacity=150.0,
+        health=1.0,
+        risk_score=0.0,
+        inventory=300.0,
+        safety_stock=100.0,
+        daily_consumption=0.0,
+        replenishment_rate=0.0,
+        metadata={"material": "Specialized Solder Compounds", "partner_tier": 2}
+    ),
+    Node(
+        id="port-singapore",
+        name="Port of Singapore Global Hub",
+        type=NodeType.PORT,
+        location="Singapore",
+        latitude=1.26,
+        longitude=103.84,
+        base_cost=28000.0,
+        capacity=850.0,
+        health=1.0,
+        risk_score=0.0,
+        inventory=300.0,
+        safety_stock=100.0,
+        daily_consumption=0.0,
+        replenishment_rate=0.0,
+        metadata={"terminal_ops": "Pasir Panjang Terminal"}
+    ),
+    Node(
+        id="supplier-korea",
+        name="Seoul Precision Chemical Partner",
+        type=NodeType.SUPPLIER,
+        location="Seoul, South Korea",
+        latitude=37.56,
+        longitude=126.97,
+        base_cost=13500.0,
+        capacity=160.0,
+        health=1.0,
+        risk_score=0.0,
+        inventory=300.0,
+        safety_stock=100.0,
+        daily_consumption=0.0,
+        replenishment_rate=0.0,
+        metadata={"material": "Etching Components", "partner_tier": 2}
+    ),
+    Node(
+        id="port-busan",
+        name="Port of Busan Terminal",
+        type=NodeType.PORT,
+        location="Busan, South Korea",
+        latitude=35.10,
+        longitude=129.04,
+        base_cost=24000.0,
+        capacity=650.0,
+        health=1.0,
+        risk_score=0.0,
+        inventory=300.0,
+        safety_stock=80.0,
+        daily_consumption=0.0,
+        replenishment_rate=0.0,
+        metadata={"terminal_ops": "Gamman Container Terminal"}
+    ),
+    Node(
+        id="customer-water",
+        name="Munich Clean Water Treatment Authority",
+        type=NodeType.PRODUCT,
+        location="Munich, Germany",
+        latitude=48.14,
+        longitude=11.59,
+        base_cost=0.0,
+        capacity=500.0,
+        health=1.0,
+        risk_score=0.0,
+        inventory=100.0,
+        safety_stock=40.0,
+        daily_consumption=10.0,
+        replenishment_rate=10.0,
+        metadata={"sector": "Critical Public Utilities"}
+    ),
+    Node(
+        id="customer-power",
+        name="Bavarian Energy Grid Operations",
+        type=NodeType.PRODUCT,
+        location="Munich, Germany",
+        latitude=48.13,
+        longitude=11.57,
+        base_cost=0.0,
+        capacity=500.0,
+        health=1.0,
+        risk_score=0.0,
+        inventory=100.0,
+        safety_stock=40.0,
+        daily_consumption=10.0,
+        replenishment_rate=10.0,
+        metadata={"sector": "Energy Distribution Grid"}
+    ),
+    Node(
+        id="customer-transit",
+        name="Munich Metropolitan Transit Authority",
+        type=NodeType.PRODUCT,
+        location="Munich, Germany",
+        latitude=48.15,
+        longitude=11.60,
+        base_cost=0.0,
+        capacity=500.0,
+        health=1.0,
+        risk_score=0.0,
+        inventory=100.0,
+        safety_stock=40.0,
+        daily_consumption=10.0,
+        replenishment_rate=10.0,
+        metadata={"sector": "Municipal Commuter Transit"}
+    ),
+    Node(
+        id="customer-redcross",
+        name="European Emergency Disaster Relief Depot",
+        type=NodeType.PRODUCT,
+        location="Munich, Germany",
+        latitude=48.12,
+        longitude=11.56,
+        base_cost=0.0,
+        capacity=500.0,
+        health=1.0,
+        risk_score=0.0,
+        inventory=100.0,
+        safety_stock=40.0,
+        daily_consumption=10.0,
+        replenishment_rate=10.0,
+        metadata={"sector": "Emergency Disaster Relief Logistics"}
     )
 ]
 
@@ -571,7 +709,7 @@ SEED_EDGES: List[Edge] = [
         transport_mode="road"
     ),
 
-    # --- END AUTOMOTIVE CUSTOMER LINKS (B2B Deliveries) ---
+    # --- END RECIPIENT LINKS (B2B Deliveries) ---
     Edge(
         source="distributor-europe",
         target="customer-bmw",
@@ -601,6 +739,88 @@ SEED_EDGES: List[Edge] = [
         target="customer-vw",
         type=EdgeType.SHIPS_TO,
         dependency_ratio=0.5,
+        lead_time_days=1,
+        transport_mode="road"
+    ),
+
+    # --- EXPANDED EDGES (Linking Singapore, Busan and new community recipients) ---
+    Edge(
+        source="supplier-singapore",
+        target="port-singapore",
+        type=EdgeType.SHIPS_TO,
+        dependency_ratio=1.0,
+        lead_time_days=1,
+        transport_mode="road"
+    ),
+    Edge(
+        source="port-singapore",
+        target="port-antwerp",
+        type=EdgeType.SHIPS_TO,
+        dependency_ratio=0.0,
+        lead_time_days=5,
+        transport_mode="ocean"
+    ),
+    Edge(
+        source="port-singapore",
+        target="port-rotterdam",
+        type=EdgeType.SHIPS_TO,
+        dependency_ratio=0.0,
+        lead_time_days=5,
+        transport_mode="ocean"
+    ),
+    Edge(
+        source="supplier-korea",
+        target="port-busan",
+        type=EdgeType.SHIPS_TO,
+        dependency_ratio=1.0,
+        lead_time_days=1,
+        transport_mode="road"
+    ),
+    Edge(
+        source="port-busan",
+        target="port-antwerp",
+        type=EdgeType.SHIPS_TO,
+        dependency_ratio=0.0,
+        lead_time_days=6,
+        transport_mode="ocean"
+    ),
+    Edge(
+        source="port-busan",
+        target="port-rotterdam",
+        type=EdgeType.SHIPS_TO,
+        dependency_ratio=0.0,
+        lead_time_days=6,
+        transport_mode="ocean"
+    ),
+    Edge(
+        source="distributor-europe",
+        target="customer-water",
+        type=EdgeType.SHIPS_TO,
+        dependency_ratio=0.25,
+        lead_time_days=1,
+        transport_mode="road"
+    ),
+    Edge(
+        source="distributor-europe",
+        target="customer-power",
+        type=EdgeType.SHIPS_TO,
+        dependency_ratio=0.25,
+        lead_time_days=1,
+        transport_mode="road"
+    ),
+    Edge(
+        source="distributor-europe",
+        target="customer-transit",
+        type=EdgeType.SHIPS_TO,
+        dependency_ratio=0.25,
+        lead_time_days=1,
+        transport_mode="road"
+    ),
+    Edge(
+        source="distributor-europe",
+        target="customer-redcross",
+        type=EdgeType.SHIPS_TO,
+        dependency_ratio=0.25,
         lead_time_days=1,
         transport_mode="road"
     )

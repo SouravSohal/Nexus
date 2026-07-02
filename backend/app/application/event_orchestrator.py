@@ -65,7 +65,8 @@ class EventOrchestrator:
             duration_days=extracted["duration_days"],
             confidence_score=extracted["confidence_score"],
             status=EventStatus.COMMITTED,
-            created_at=datetime.now(timezone.utc)
+            created_at=datetime.now(timezone.utc),
+            affected_nodes=extracted.get("affected_nodes", [])
         )
         
         # 3. Commit to Event Store (Infrastructure)

@@ -12,10 +12,78 @@ from backend.app.infrastructure.external.gemini_client import GeminiExtractionSc
 
 logger = logging.getLogger(__name__)
 
+def build_ask_context(question: str, system_state: Dict[str, Any]) -> str:
+    """
+    Constructs a textual state summary of the Digital Twin network
+    (nodes, edges, metrics, active disruptions) as context for LLM answering.
+    """
+    nodes_summary = []
+    for n in system_state.get("nodes", []):
+        nodes_summary.append(
+            f"- {n.get('name')} (ID: '{n.get('id')}'): Location: {n.get('location')}, "
+            f"Health: {n.get('health', 1.0) * 100:.0f}%, "
+            f"Inv: {n.get('inventory', 0.0):.0f}/{n.get('capacity', 100.0):.0f}"
+        )
+
+    edges_summary = []
+    for e in system_state.get("edges", []):
+        edges_summary.append(
+            f"- {e.get('source')} -> {e.get('target')}: Mode: {e.get('transport_mode')}, "
+            f"Dependency Ratio: {e.get('dependency_ratio', 1.0):.2f}"
+        )
+
+    metrics = system_state.get("metrics", {})
+    active_event = system_state.get("active_event")
+    if active_event:
+        affected_nodes_list = active_event.get("affected_nodes", [])
+        if affected_nodes_list:
+            nodes_impacted_str = ", ".join([
+                f"{an.get('node_id')} (Severity: {an.get('severity', 0.0)*100:.0f}%, Disruption: {an.get('disruption_type')})"
+                for an in affected_nodes_list
+            ])
+            event_str = (
+                f"Active Disruption: {active_event.get('title')} affecting multiple assets: {nodes_impacted_str} "
+                f"for a duration of {active_event.get('duration_days', 0)} days."
+            )
+        else:
+            event_str = (
+                f"Active Disruption: {active_event.get('title')} at node '{active_event.get('affected_node_id')}' "
+                f"(Severity: {active_event.get('severity', 0.0) * 100:.0f}%, Duration: {active_event.get('duration_days', 0)} days)"
+            )
+    else:
+        event_str = "No active disruptions."
+
+    context = f"""
+    NEXUS is an AI Decision Intelligence Platform for Critical Infrastructure & Community Resilience.
+    Here is the current state of our infrastructure network:
+    
+    ### Active Disruption State:
+    {event_str}
+    
+    ### Global Resilience KPIs:
+    - Overall System Resilience Score: {metrics.get('overall_resilience', 100.0):.1f}%
+    - Projected Community/Financial Impact: ${metrics.get('total_financial_loss', 0.0):,.2f}
+    
+    ### Active Infrastructure Nodes State:
+    {"\n".join(nodes_summary)}
+    
+    ### Active Connectivity Channels:
+    {"\n".join(edges_summary)}
+    """
+
+    prompt = f"""
+    {context}
+    
+    User Question: "{question}"
+    
+    Answer the user's operational question concisely based on the system state. Highlight key risks, at-risk facilities, or optimal mitigations using professional, executive-focused language. Keep it under 150 words.
+    """
+    return prompt
+
+
 class GeminiProvider(AIClient):
     """
     GeminiProvider calls Google Gemini API.
-    Raises exceptions on failures so that the orchestrator can trigger failover.
     """
     def __init__(self, api_key: str):
         self.api_key = api_key
@@ -114,11 +182,18 @@ class GeminiProvider(AIClient):
         response = model.generate_content(prompt)
         return response.text
 
+    def ask_question(self, question: str, system_state: Dict[str, Any]) -> str:
+        if not self.api_key:
+            raise ValueError("Gemini API Key missing")
+        prompt = build_ask_context(question, system_state)
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content(prompt)
+        return response.text
+
 
 class OllamaProvider(AIClient):
     """
     OllamaProvider calls a local Ollama Mistral model.
-    Implements a single-attempt JSON repair loop if validation fails.
     """
     def __init__(self, base_url: str, model: str):
         self.base_url = base_url.rstrip("/")
@@ -154,8 +229,8 @@ class OllamaProvider(AIClient):
         You are an advanced risk analyzer for the NEXUS Decision Intelligence Platform.
         Analyze the following unstructured news text and extract the core risk event details.
         
-        You MUST map the event to one of our existing Digital Twin nodes listed below.
-        Select the ID of the node most directly impacted.
+        You MUST map the event to one or more of our existing Digital Twin nodes listed below.
+        Select the IDs of all nodes directly impacted.
         
         ### Known Digital Twin Nodes:
         {nodes_context}
@@ -169,10 +244,18 @@ class OllamaProvider(AIClient):
             "title": "A short, professional title summarizing the disruption event",
             "description": "A concise summary of the event details, duration, and immediate impact",
             "location": "The geographic location where the event took place",
-            "affected_node_id": "The ID of the directly affected node, matching one of the IDs listed above",
+            "affected_node_id": "The primary ID of the directly affected node",
             "severity": 0.0 to 1.0 (float),
             "duration_days": integer greater than 0,
-            "confidence_score": 0.0 to 1.0 (float)
+            "confidence_score": 0.0 to 1.0 (float),
+            "affected_nodes": [
+                {{
+                    "node_id": "The ID of the affected node, matching one of the IDs listed above",
+                    "severity": 0.0 to 1.0 (float),
+                    "confidence": 0.0 to 1.0 (float),
+                    "disruption_type": "The type of disruption, e.g. shutdown"
+                }}
+            ]
         }}
         
         Return ONLY raw JSON. Do not write any markdown blocks (like ```json), explanations, or notes.
@@ -199,10 +282,18 @@ class OllamaProvider(AIClient):
                 "title": "A short, professional title summarizing the disruption event",
                 "description": "A concise summary of the event details, duration, and immediate impact",
                 "location": "The geographic location where the event took place",
-                "affected_node_id": "The ID of the directly affected node",
+                "affected_node_id": "The primary ID of the directly affected node",
                 "severity": 0.0 to 1.0 (float),
                 "duration_days": integer greater than 0,
-                "confidence_score": 0.0 to 1.0 (float)
+                "confidence_score": 0.0 to 1.0 (float),
+                "affected_nodes": [
+                    {{
+                        "node_id": "The ID of the affected node",
+                        "severity": 0.0 to 1.0 (float),
+                        "confidence": 0.0 to 1.0 (float),
+                        "disruption_type": "disruption type string"
+                    }}
+                ]
             }}
             
             Fix the errors and output ONLY the valid JSON object. Do not include markdown code blocks or explanations.
@@ -261,11 +352,14 @@ class OllamaProvider(AIClient):
         """
         return self._call_ollama(prompt)
 
+    def ask_question(self, question: str, system_state: Dict[str, Any]) -> str:
+        prompt = build_ask_context(question, system_state)
+        return self._call_ollama(prompt)
+
 
 class MockProvider(AIClient):
     """
     MockProvider reuses the high-fidelity keyword matching mock logic.
-    Guarantees test suite execution without real API services.
     """
     def __init__(self):
         self.client = GeminiClient()
@@ -280,3 +374,14 @@ class MockProvider(AIClient):
         options: List[MitigationOption]
     ) -> str:
         return self.client._mock_recommendation(event, do_nothing_impact, options)
+
+    def ask_question(self, question: str, system_state: Dict[str, Any]) -> str:
+        q = question.lower()
+        if "risk" in q or "facility" in q or "node" in q:
+            return "Based on current telemetry, the Munich Logistics Hub is at highest risk. Safety stocks are projected to deplete to 0 by Day 6 due to the active port closure."
+        elif "mitigation" in q or "recommend" in q:
+            return "To minimize community impact, we recommend activating the Rotterdam Rerouting path immediately. This restores material flow and avoids the plant shutdown penalty."
+        elif "what happens" in q or "duration" in q or "last" in q:
+            return "An extended disruption will trigger a complete stockout at the Munich assembly factory, causing essential equipment manufacturing to halt by Day 10."
+        else:
+            return "NEXUS currently monitors 25 critical infrastructure nodes. The overall resilience is at 100% under baseline operations, but drops when Kaohsiung or Antwerp ports are blocked."

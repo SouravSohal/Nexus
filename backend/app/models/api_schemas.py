@@ -24,6 +24,12 @@ class MitigationSelectionRequest(BaseModel):
         }
     )
 
+class AffectedNodeResponse(BaseModel):
+    node_id: str
+    severity: float
+    confidence: float
+    disruption_type: str
+
 class EventResponse(BaseModel):
     """Committed RiskEvent representation."""
     id: str
@@ -36,6 +42,7 @@ class EventResponse(BaseModel):
     confidence_score: float
     status: EventStatus
     created_at: datetime
+    affected_nodes: List[AffectedNodeResponse] = []
 
     class Config:
         json_schema_extra = {

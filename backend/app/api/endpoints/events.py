@@ -132,3 +132,81 @@ def reset_network(orchestrator: EventOrchestrator = Depends(get_orchestrator)):
 def get_ai_status(ai_client: AIOrchestrator = Depends(get_ai_client)):
     """Retrieves active AI engine provider state (gemini, ollama, offline)."""
     return {"provider": ai_client.get_provider_status()}
+
+from pydantic import BaseModel
+
+class AskRequest(BaseModel):
+    question: str
+
+@router.post("/system/ask", status_code=status.HTTP_200_OK)
+def ask_nexus(
+    payload: AskRequest,
+    repo: SupplyChainRepository = Depends(get_repository),
+    ai_client: AIOrchestrator = Depends(get_ai_client)
+):
+    """Answers an operational question about the current state of the Digital Twin."""
+    try:
+        # Load all nodes
+        db_nodes = repo.get_nodes()
+        nodes_list = []
+        for n in db_nodes:
+            nodes_list.append({
+                "id": n.id,
+                "name": n.name,
+                "type": n.type,
+                "location": n.location,
+                "health": n.health,
+                "inventory": n.inventory,
+                "capacity": n.capacity
+            })
+
+        # Load all edges
+        db_edges = repo.get_edges()
+        edges_list = []
+        for e in db_edges:
+            edges_list.append({
+                "source": e.source,
+                "target": e.target,
+                "transport_mode": e.transport_mode,
+                "dependency_ratio": e.dependency_ratio
+            })
+
+        # Load active disruption event
+        db_events = repo.get_risk_events()
+        committed_events = [evt for evt in db_events if evt.status == "COMMITTED"]
+        active_event = None
+        metrics = {"overall_resilience": 100.0, "total_financial_loss": 0.0}
+
+        if committed_events:
+            evt = committed_events[0]
+            active_event = {
+                "id": evt.id,
+                "title": evt.title,
+                "affected_node_id": evt.affected_node_id,
+                "severity": evt.severity,
+                "duration_days": evt.duration_days,
+                "affected_nodes": [an.model_dump() for an in evt.affected_nodes]
+            }
+            # Load active metrics from latest simulation run
+            run = repo.get_latest_simulation_run_by_event(evt.id)
+            if run and run.timeline:
+                day_metrics = run.timeline[0].metrics
+                metrics = {
+                    "overall_resilience": day_metrics.resilience_score,
+                    "total_financial_loss": day_metrics.financial_loss
+                }
+
+        system_state = {
+            "nodes": nodes_list,
+            "edges": edges_list,
+            "active_event": active_event,
+            "metrics": metrics
+        }
+
+        answer = ai_client.ask_question(payload.question, system_state)
+        return {"answer": answer}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Query failed: {str(e)}"
+        )

@@ -40,11 +40,16 @@ class DecisionEngine:
             delayed_products = step.metrics.delayed_products
             
             if earliest_stockout_day == -1:
-                # Check if Munich hub or factory assembly are starved
-                hub_health = step.node_states.get("warehouse-munich").health
-                factory_health = step.node_states.get("factory-assembly").health
-                if hub_health == 0.0 or factory_health == 0.0:
-                    earliest_stockout_day = step.day
+                # Check if Munich hub, assembly, or any community/product node is starved
+                for state_id, node_state in step.node_states.items():
+                    is_downstream = (
+                        state_id.startswith("customer-") or 
+                        state_id.startswith("product-") or 
+                        state_id == "factory-assembly"
+                    )
+                    if is_downstream and node_state.health == 0.0:
+                        earliest_stockout_day = step.day
+                        break
 
         do_nothing = DoNothingImpact(
             earliest_stockout_day=earliest_stockout_day if earliest_stockout_day != -1 else len(simulation_run.timeline),

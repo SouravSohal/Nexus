@@ -31,6 +31,7 @@ interface NexusContextType {
   setTimelinePlaying: (play: boolean) => void;
   applyMitigationAction: (optionId: string) => Promise<void>;
   resetDigitalTwin: () => Promise<void>;
+  askQuestion: (question: string) => Promise<string>;
 }
 
 const NexusContext = createContext<NexusContextType | undefined>(undefined);
@@ -193,6 +194,15 @@ export const NexusProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const askQuestion = async (question: string): Promise<string> => {
+    try {
+      const res = await api.askQuestion(question);
+      return res.answer;
+    } catch (err: any) {
+      return `Failed to query Assistant: ${err.message || "Unknown error"}`;
+    }
+  };
+
   // Autoplay handler for timeline player
   useEffect(() => {
     if (timelinePlaying && activeSimulation) {
@@ -276,7 +286,8 @@ export const NexusProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setSelectedDay,
       setTimelinePlaying,
       applyMitigationAction,
-      resetDigitalTwin
+      resetDigitalTwin,
+      askQuestion
     }}>
       {children}
     </NexusContext.Provider>

@@ -29,6 +29,9 @@ class TemporalSimulationEngine:
         # 1. Build the graph representation
         self.graph_engine.build_graph(nodes, edges)
         
+        # Build a mapping of affected nodes from the event
+        affected_nodes_map = {n.node_id: n for n in event.affected_nodes}
+        
         # 2. Setup simulation variables
         current_nodes = {node.id: node.model_copy() for node in nodes}
         adjacency_in: Dict[str, List[Tuple[str, float, int]]] = {node.id: [] for node in nodes}
@@ -66,8 +69,9 @@ class TemporalSimulationEngine:
                     # Raw material supplier node with no inputs: replenishment is constant
                     # but affected by its own health (if it is disrupted)
                     node_health = node.health
-                    if node_id == event.affected_node_id and event_active:
-                        node_health = min(node_health, 1.0 - event.severity)
+                    if node_id in affected_nodes_map and event_active:
+                        impact = affected_nodes_map[node_id]
+                        node_health = min(node_health, 1.0 - impact.severity)
                     inflows[node_id] = node.replenishment_rate * node_health
                 else:
                     # Inflow is the sum of shipments that departed suppliers (lead_time_days) ago,
@@ -103,9 +107,10 @@ class TemporalSimulationEngine:
                     node_risk = 1.0
 
                 # Cap health if this is the directly disrupted event target
-                if node_id == event.affected_node_id and event_active:
-                    node_health = min(node_health, 1.0 - event.severity)
-                    node_risk = max(node_risk, event.severity)
+                if node_id in affected_nodes_map and event_active:
+                    impact = affected_nodes_map[node_id]
+                    node_health = min(node_health, 1.0 - impact.severity)
+                    node_risk = max(node_risk, impact.severity)
                 
                 node.health = node_health
                 node.risk_score = node_risk

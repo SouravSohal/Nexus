@@ -78,9 +78,16 @@ class SQLiteRepository(SupplyChainRepository):
                     duration_days INTEGER NOT NULL,
                     confidence_score REAL NOT NULL,
                     status TEXT NOT NULL,
-                    created_at TEXT NOT NULL
+                    created_at TEXT NOT NULL,
+                    affected_nodes_json TEXT
                 )
             """)
+            
+            # Check and add column if it was created previously without this column
+            cursor.execute("PRAGMA table_info(risk_events)")
+            columns = [info[1] for info in cursor.fetchall()]
+            if "affected_nodes_json" not in columns:
+                cursor.execute("ALTER TABLE risk_events ADD COLUMN affected_nodes_json TEXT")
 
             # Create Simulation Runs Table
             cursor.execute("""
@@ -232,15 +239,16 @@ class SQLiteRepository(SupplyChainRepository):
     def create_risk_event(self, event: RiskEvent) -> None:
         with self._get_connection() as conn:
             cursor = conn.cursor()
+            affected_nodes_json = json.dumps([n.model_dump() for n in event.affected_nodes])
             cursor.execute("""
                 INSERT OR REPLACE INTO risk_events (
                     id, title, description, location, affected_node_id,
-                    severity, duration_days, confidence_score, status, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    severity, duration_days, confidence_score, status, created_at, affected_nodes_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 event.id, event.title, event.description, event.location, event.affected_node_id,
                 event.severity, event.duration_days, event.confidence_score, event.status.value,
-                event.created_at.isoformat()
+                event.created_at.isoformat(), affected_nodes_json
             ))
             conn.commit()
 
@@ -251,17 +259,25 @@ class SQLiteRepository(SupplyChainRepository):
             row = cursor.fetchone()
             if not row:
                 return None
+            row_dict = dict(row)
+            affected_nodes = []
+            if row_dict.get("affected_nodes_json"):
+                try:
+                    affected_nodes = json.loads(row_dict["affected_nodes_json"])
+                except Exception:
+                    pass
             return RiskEvent(
-                id=row["id"],
-                title=row["title"],
-                description=row["description"],
-                location=row["location"],
-                affected_node_id=row["affected_node_id"],
-                severity=row["severity"],
-                duration_days=row["duration_days"],
-                confidence_score=row["confidence_score"],
-                status=EventStatus(row["status"]),
-                created_at=datetime.fromisoformat(row["created_at"])
+                id=row_dict["id"],
+                title=row_dict["title"],
+                description=row_dict["description"],
+                location=row_dict["location"],
+                affected_node_id=row_dict["affected_node_id"],
+                severity=row_dict["severity"],
+                duration_days=row_dict["duration_days"],
+                confidence_score=row_dict["confidence_score"],
+                status=EventStatus(row_dict["status"]),
+                created_at=datetime.fromisoformat(row_dict["created_at"]),
+                affected_nodes=affected_nodes
             )
 
     def get_risk_events(self) -> List[RiskEvent]:
@@ -271,17 +287,25 @@ class SQLiteRepository(SupplyChainRepository):
             rows = cursor.fetchall()
             events = []
             for row in rows:
+                row_dict = dict(row)
+                affected_nodes = []
+                if row_dict.get("affected_nodes_json"):
+                    try:
+                        affected_nodes = json.loads(row_dict["affected_nodes_json"])
+                    except Exception:
+                        pass
                 events.append(RiskEvent(
-                    id=row["id"],
-                    title=row["title"],
-                    description=row["description"],
-                    location=row["location"],
-                    affected_node_id=row["affected_node_id"],
-                    severity=row["severity"],
-                    duration_days=row["duration_days"],
-                    confidence_score=row["confidence_score"],
-                    status=EventStatus(row["status"]),
-                    created_at=datetime.fromisoformat(row["created_at"])
+                    id=row_dict["id"],
+                    title=row_dict["title"],
+                    description=row_dict["description"],
+                    location=row_dict["location"],
+                    affected_node_id=row_dict["affected_node_id"],
+                    severity=row_dict["severity"],
+                    duration_days=row_dict["duration_days"],
+                    confidence_score=row_dict["confidence_score"],
+                    status=EventStatus(row_dict["status"]),
+                    created_at=datetime.fromisoformat(row_dict["created_at"]),
+                    affected_nodes=affected_nodes
                 ))
             return events
 

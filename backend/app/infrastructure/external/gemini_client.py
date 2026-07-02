@@ -11,11 +11,17 @@ from backend.app.domain.models.decision import MitigationOption, DoNothingImpact
 
 logger = logging.getLogger(__name__)
 
-# Pydantic schema for Gemini structured output extraction
+# Pydantic schemas for Gemini structured output extraction
+class AffectedNodeSchema(BaseModel):
+    node_id: str = Field(..., description="ID of the affected digital twin node. MUST match one of the node IDs provided in the prompt.")
+    severity: float = Field(..., ge=0.0, le=1.0, description="Disruption impact ratio (0.0 to 1.0)")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Extraction confidence for this specific node (0.0 to 1.0)")
+    disruption_type: str = Field(default="shutdown", description="Type of disruption (e.g. shutdown, power_loss, congestion)")
+
 class GeminiExtractionSchema(BaseModel):
     title: str = Field(
         ..., 
-        description="A short, professional title summarizing the disruption event (e.g. 'Port of Antwerp worker strike')."
+        description="A short, professional title summarizing the disruption event."
     )
     description: str = Field(
         ..., 
@@ -23,11 +29,11 @@ class GeminiExtractionSchema(BaseModel):
     )
     location: str = Field(
         ..., 
-        description="The geographic location where the event took place (e.g. 'Antwerp, Belgium')."
+        description="The geographic location where the event took place."
     )
     affected_node_id: str = Field(
         ..., 
-        description="The ID of the digital twin node directly affected. MUST match one of the node IDs provided in the prompt."
+        description="The primary ID of the digital twin node directly affected. MUST match one of the node IDs provided in the prompt."
     )
     severity: float = Field(
         ..., 
@@ -35,11 +41,15 @@ class GeminiExtractionSchema(BaseModel):
     )
     duration_days: int = Field(
         ..., 
-        description="Estimated duration of the disruption in days. If not mentioned, estimate a realistic duration. Must be an integer greater than 0."
+        description="Estimated duration of the disruption in days. Must be an integer greater than 0."
     )
     confidence_score: float = Field(
         ..., 
         description="Your confidence score in the accuracy of this extraction. Value must be between 0.0 and 1.0."
+    )
+    affected_nodes: List[AffectedNodeSchema] = Field(
+        default_factory=list,
+        description="List of all nodes directly affected by this event."
     )
 
 class GeminiClient(AIClient):
@@ -79,19 +89,20 @@ class GeminiClient(AIClient):
             You are an advanced risk analyzer for the NEXUS Decision Intelligence Platform.
             Analyze the following unstructured news text and extract the core risk event details.
             
-            You MUST map the event to one of our existing Digital Twin nodes listed below.
-            Select the ID of the node most directly impacted.
+            You MUST map the event to one or more of our existing Digital Twin nodes listed below.
+            Select the IDs of all nodes directly impacted.
             
             ### Known Digital Twin Nodes:
             {nodes_context}
             
-            ### Unstructured News Article Content:
+            ### Unstructured News Content:
             "{news_text}"
             
             ### Extraction Instructions:
-            1. Match location and context to select the single best matching node ID.
-            2. Infer a severity score between 0.0 and 1.0 (e.g., partial closure = 0.5, complete halt = 1.0).
+            1. Match locations and context to select the affected node IDs.
+            2. Infer a severity score between 0.0 and 1.0 for each node.
             3. Infer duration in days.
+            4. Populate the affected_nodes list. Ensure affected_node_id represents the primary affected node.
             """
             
             # Using Gemini supporting schema enforcement
@@ -179,8 +190,88 @@ class GeminiClient(AIClient):
         """
         text_lower = news_text.lower()
         
-        # 1. Check for Antwerp strike
-        if "antwerp" in text_lower or "strike" in text_lower:
+        # 1. Two ports: Kaohsiung and Singapore
+        if "two ports" in text_lower or ("kaohsiung" in text_lower and "singapore" in text_lower):
+            return {
+                "title": "Dual East-Asia Maritime Disruptions",
+                "description": "Severe weather alerts disrupt logistics berths at both Port of Kaohsiung and Port of Singapore.",
+                "location": "East Asia",
+                "affected_node_id": "port-kaohsiung",
+                "severity": 0.90,
+                "duration_days": 3,
+                "confidence_score": 0.95,
+                "affected_nodes": [
+                    {"node_id": "port-kaohsiung", "severity": 0.90, "confidence": 0.95, "disruption_type": "weather_shutdown"},
+                    {"node_id": "port-singapore", "severity": 0.85, "confidence": 0.92, "disruption_type": "congestion"}
+                ]
+            }
+        
+        # 2. Both European Gateway Ports: Antwerp and Rotterdam
+        elif "closes both the ports" in text_lower or "cutting off entirely" in text_lower or ("antwerp" in text_lower and "rotterdam" in text_lower):
+            return {
+                "title": "Total Maritime Gateway Shutdown",
+                "description": "Critical storm surge shuts down all container processing at both the Port of Antwerp and Port of Rotterdam for 5 days, cutting off all maritime shipping lines into Central Europe.",
+                "location": "North Sea Gateways",
+                "affected_node_id": "port-antwerp",
+                "severity": 1.0,
+                "duration_days": 5,
+                "confidence_score": 0.98,
+                "affected_nodes": [
+                    {"node_id": "port-antwerp", "severity": 1.0, "confidence": 0.98, "disruption_type": "storm_surge"},
+                    {"node_id": "port-rotterdam", "severity": 1.0, "confidence": 0.98, "disruption_type": "storm_surge"}
+                ]
+            }
+
+        # 3. Port and a warehouse: Antwerp and Munich
+        elif "port and a warehouse" in text_lower or ("antwerp" in text_lower and "munich" in text_lower):
+            return {
+                "title": "Combined Gateway and Storage Outage",
+                "description": "Security protocols force operational halts at the Port of Antwerp and Munich Regional Logistics Hub.",
+                "location": "Central Europe",
+                "affected_node_id": "port-antwerp",
+                "severity": 0.80,
+                "duration_days": 4,
+                "confidence_score": 0.93,
+                "affected_nodes": [
+                    {"node_id": "port-antwerp", "severity": 0.80, "confidence": 0.95, "disruption_type": "dock_strike"},
+                    {"node_id": "warehouse-munich", "severity": 0.70, "confidence": 0.90, "disruption_type": "power_failure"}
+                ]
+            }
+
+        # 3. Multiple logistics hubs: Munich and Stuttgart
+        elif "multiple logistics hubs" in text_lower or ("stuttgart" in text_lower and "munich" in text_lower):
+            return {
+                "title": "Multi-Hub Regional Storage Disruption",
+                "description": "System outages trigger inventory tracking offline state at both Munich and Stuttgart Logistics Hubs.",
+                "location": "Germany",
+                "affected_node_id": "warehouse-munich",
+                "severity": 0.75,
+                "duration_days": 5,
+                "confidence_score": 0.91,
+                "affected_nodes": [
+                    {"node_id": "warehouse-munich", "severity": 0.75, "confidence": 0.92, "disruption_type": "system_outage"},
+                    {"node_id": "warehouse-stuttgart", "severity": 0.75, "confidence": 0.90, "disruption_type": "system_outage"}
+                ]
+            }
+
+        # 4. Mixed infrastructure assets: Kaohsiung and Dresden
+        elif "mixed infrastructure" in text_lower or ("dresden" in text_lower and "kaohsiung" in text_lower):
+            return {
+                "title": "Transit and Fabrication Infrastructure Outage",
+                "description": "Power grid surge degrades operations at Port of Kaohsiung and Dresden Advanced Operations Center.",
+                "location": "Global",
+                "affected_node_id": "port-kaohsiung",
+                "severity": 0.85,
+                "duration_days": 3,
+                "confidence_score": 0.94,
+                "affected_nodes": [
+                    {"node_id": "port-kaohsiung", "severity": 0.85, "confidence": 0.95, "disruption_type": "weather_shutdown"},
+                    {"node_id": "factory-wafer-de", "severity": 0.90, "confidence": 0.93, "disruption_type": "power_surge"}
+                ]
+            }
+
+        # 5. Legacy Antwerp strike
+        elif "antwerp" in text_lower or "strike" in text_lower:
             return {
                 "title": "Port of Antwerp Dockworker Strike",
                 "description": "A 5-day walkout by container terminal operators halts shipping and trucking operations.",
@@ -188,10 +279,13 @@ class GeminiClient(AIClient):
                 "affected_node_id": "port-antwerp",
                 "severity": 0.85,
                 "duration_days": 5,
-                "confidence_score": 0.95
+                "confidence_score": 0.95,
+                "affected_nodes": [
+                    {"node_id": "port-antwerp", "severity": 0.85, "confidence": 0.95, "disruption_type": "dock_strike"}
+                ]
             }
         
-        # 2. Check for Kaohsiung port issues
+        # 6. Legacy Kaohsiung port issue
         elif "kaohsiung" in text_lower or "typhoon" in text_lower:
             return {
                 "title": "Typhoon Disruption at Kaohsiung",
@@ -200,10 +294,13 @@ class GeminiClient(AIClient):
                 "affected_node_id": "port-kaohsiung",
                 "severity": 0.90,
                 "duration_days": 3,
-                "confidence_score": 0.92
+                "confidence_score": 0.92,
+                "affected_nodes": [
+                    {"node_id": "port-kaohsiung", "severity": 0.90, "confidence": 0.92, "disruption_type": "weather_shutdown"}
+                ]
             }
             
-        # 3. Default fallback
+        # Default fallback
         return {
             "title": "Unscheduled Logistics Disruption",
             "description": "General transport delays affecting international container processing channels.",
@@ -211,7 +308,10 @@ class GeminiClient(AIClient):
             "affected_node_id": "port-antwerp",
             "severity": 0.50,
             "duration_days": 4,
-            "confidence_score": 0.80
+            "confidence_score": 0.80,
+            "affected_nodes": [
+                {"node_id": "port-antwerp", "severity": 0.50, "confidence": 0.80, "disruption_type": "general_delay"}
+            ]
         }
 
     def _mock_recommendation(
@@ -238,3 +338,12 @@ class GeminiClient(AIClient):
 
 **Decision Endorsement:** We recommend immediately implementing the **{recommended_opt.title}** playbook to maintain plant operations and avoid the $1.25M production shutdown penalty.
 """
+
+    def ask_question(self, question: str, system_state: Dict[str, Any]) -> str:
+        q = question.lower()
+        if "risk" in q or "facility" in q or "node" in q:
+            return "Based on current telemetry, the Munich Logistics Hub is at highest risk. Safety stocks are projected to deplete to 0 by Day 6 due to the active port closure."
+        elif "mitigation" in q or "recommend" in q:
+            return "To minimize community impact, we recommend activating the Rotterdam Rerouting path immediately."
+        else:
+            return "NEXUS currently monitors 25 critical infrastructure nodes. The overall resilience is at 100% under baseline operations."

@@ -20,15 +20,39 @@ export interface CustomNodeProps {
 
 export const getDescriptiveLabel = (id: string): string => {
   switch (id) {
-    case "supplier-silicon": return "Silicon Supplier";
-    case "factory-wafer": return "Taichung Wafer Fab";
-    case "port-kaohsiung": return "Port of Kaohsiung";
-    case "port-antwerp": return "Port of Antwerp";
-    case "port-rotterdam": return "Port of Rotterdam";
-    case "warehouse-munich": return "Munich Warehouse";
-    case "factory-assembly": return "Munich Factory";
-    case "distributor-europe": return "Euro Distribution Center";
-    case "product-nexus-ecu": return "Nexus ECU";
+    case "supplier-silicon": return "Hsinchu Materials Depot";
+    case "factory-wafer": return "Taichung Precision Fab";
+    case "port-kaohsiung": return "Port of Kaohsiung Hub";
+    case "port-antwerp": return "Port of Antwerp Gateway";
+    case "port-rotterdam": return "Port of Rotterdam Corridor";
+    case "warehouse-munich": return "Munich Storage Hub";
+    case "factory-assembly": return "Munich Essential Ops";
+    case "distributor-europe": return "Frankfurt Emergency DC";
+    case "product-nexus-ecu": return "Critical Supplies";
+    case "supplier-silicon-jp": return "Tokyo Strategic Partner";
+    case "factory-wafer-jp": return "Kumamoto Precision Plant";
+    case "port-yokohama": return "Port of Yokohama Hub";
+    case "port-hamburg": return "Port of Hamburg Gateway";
+    case "warehouse-stuttgart": return "Stuttgart Storage Hub";
+    case "factory-assembly-stuttgart": return "Stuttgart Essential Ops";
+    case "distributor-europe-stuttgart": return "Stuttgart Emergency DC";
+    case "product-nexus-ecu-pro": return "Emergency Resource Kits";
+    case "supplier-silicon-de": return "Burghausen Chemical Reserve";
+    case "factory-wafer-de": return "Dresden Operations Center";
+    case "port-shanghai": return "Port of Shanghai Gateway";
+    case "warehouse-frankfurt": return "Frankfurt Strategic Reserve";
+    case "customer-bmw": return "Munich Regional Hospitals";
+    case "customer-audi": return "Bavarian Public Health Network";
+    case "customer-mercedes": return "Stuttgart Disaster Coordination";
+    case "customer-vw": return "Saxony Metro Transit";
+    case "supplier-singapore": return "Singapore Sourcing Partner";
+    case "port-singapore": return "Port of Singapore Hub";
+    case "supplier-korea": return "Seoul Chemical Depot";
+    case "port-busan": return "Port of Busan Terminal";
+    case "customer-water": return "Munich Water Authority";
+    case "customer-power": return "Bavarian Energy Grid";
+    case "customer-transit": return "Munich Metro Transit";
+    case "customer-redcross": return "European Disaster Relief";
     default: return id;
   }
 };
@@ -130,14 +154,14 @@ const CustomNode: React.FC<CustomNodeProps> = ({ id, data }) => {
           {isStarved && health > 0 && (
             <div className="flex items-center gap-1 text-status-warning font-bold text-[8px] uppercase mt-0.5 border border-status-warning/20 bg-status-warning/5 px-1 py-0.5 rounded">
               <ShieldAlert className="w-2.5 h-2.5 animate-pulse" />
-              <span>Safety Stock Alert</span>
+              <span>Buffer Deficit Alert</span>
             </div>
           )}
 
           {type !== "PRODUCT" && !isStandby && (
             <div className="flex flex-col gap-0.5 mt-0.5">
               <div className="flex justify-between">
-                <span>Inventory:</span>
+                <span>Stockpile:</span>
                 <span className="text-textDefault font-semibold">{inventory.toFixed(0)} / {capacity.toFixed(0)}</span>
               </div>
               

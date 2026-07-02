@@ -123,6 +123,18 @@ class AIOrchestrator(AIClient):
                 logger.warning("[AI] Fallback failed. Engaging Mock Provider safety valve...")
                 return self.mock.generate_executive_recommendation(event, do_nothing_impact, options)
 
+    def ask_question(self, question: str, system_state: Dict[str, Any]) -> str:
+        provider = self._get_provider(self.active_status)
+        start_time = time.perf_counter()
+        try:
+            res = provider.ask_question(question, system_state)
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            self._log_and_print(self.active_status, "Success", duration_ms)
+            return res
+        except Exception as e:
+            logger.warning(f"[AI] ask_question failed on active provider {self.active_status}: {str(e)}. Falling back to mock.")
+            return self.mock.ask_question(question, system_state)
+
     def _classify_error(self, err: Exception) -> str:
         err_msg = str(err).lower()
         if "quota" in err_msg or "429" in err_msg or "rate limit" in err_msg:

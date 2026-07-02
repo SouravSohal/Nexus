@@ -29,6 +29,13 @@ export interface Edge {
   transport_mode: string;
 }
 
+export interface AffectedNodeImpact {
+  node_id: string;
+  severity: number;
+  confidence: number;
+  disruption_type: string;
+}
+
 export interface RiskEvent {
   id: string;
   title: string;
@@ -40,6 +47,7 @@ export interface RiskEvent {
   confidence_score: number;
   status: EventStatus;
   created_at: string;
+  affected_nodes?: AffectedNodeImpact[];
 }
 
 export interface NodeState {

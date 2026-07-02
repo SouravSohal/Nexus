@@ -29,3 +29,11 @@ class AIClient(ABC):
         a clear, executive narrative explaining the trade-offs.
         """
         pass
+
+    @abstractmethod
+    def ask_question(self, question: str, system_state: Dict[str, Any]) -> str:
+        """
+        Answers operational natural language questions about the current state
+        of the digital twin, risks, and mitigations.
+        """
+        pass

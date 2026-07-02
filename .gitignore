@@ -49,3 +49,6 @@ logs/
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Internal Documentation (Maintainers Only)
+internal_docs/

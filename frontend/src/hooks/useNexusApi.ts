@@ -71,7 +71,14 @@ export const useNexusApi = () => {
 
       /** Get active AI engine provider state */
       getAiStatus: () => 
-        fetchJson<{ provider: string }>("/events/system/ai-status")
+        fetchJson<{ provider: string }>("/events/system/ai-status"),
+
+      /** Ask natural language questions about active digital twin state */
+      askQuestion: (question: string) => 
+        fetchJson<{ answer: string }>("/events/system/ask", {
+          method: "POST",
+          body: JSON.stringify({ question })
+        })
     };
   }, []);
 };
