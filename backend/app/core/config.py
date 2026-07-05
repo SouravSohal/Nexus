@@ -12,5 +12,14 @@ class Settings:
     FALLBACK_AI_PROVIDER: str = os.environ.get("FALLBACK_AI_PROVIDER", "ollama")
     OLLAMA_BASE_URL: str = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = os.environ.get("OLLAMA_MODEL", "mistral")
+    APP_ENV: str = os.environ.get("APP_ENV", "development")
+    LOG_LEVEL: str = os.environ.get("LOG_LEVEL", "INFO")
+    CORS_ORIGINS_RAW: str = os.environ.get("CORS_ORIGINS", "*")
+
+    @property
+    def CORS_ORIGINS(self) -> list[str]:
+        if not self.CORS_ORIGINS_RAW or self.CORS_ORIGINS_RAW == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.CORS_ORIGINS_RAW.split(",") if origin.strip()]
 
 settings = Settings()

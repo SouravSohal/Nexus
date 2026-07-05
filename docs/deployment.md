@@ -1,109 +1,182 @@
-# System Deployment Guide
+# NEXUS Deployment Guide
 
-This document outlines instructions for local setup, environment configuration, database seeding, and production cloud deployment strategies for the NEXUS platform.
-
----
-
-## 1. Local Environment Requirements
-
-### 1.1 Backend Prerequisites
--   Python 3.11 or higher
--   Pip package manager
--   Virtualenv tool
-
-### 1.2 Frontend Prerequisites
--   Node.js (LTS version 18 or 20 recommended)
--   npm package manager
-
-### 1.3 Local AI Prerequisites (Optional)
--   Ollama installed locally
--   Mistral model pulled: `ollama pull mistral`
+This document provides complete instructions for containerized local execution, multi-container Docker Compose orchestration, and production deployments on Google Cloud Run using Artifact Registry and Cloud Build.
 
 ---
 
-## 2. Environment Variables Configuration
+## 1. Local Containerized Setup
 
-Create a `.env` file in the `backend/` directory to configure services:
+You can build and run individual components of the NEXUS platform using Docker.
 
-| Variable Name | Required | Default Value | Purpose / Description |
-| :--- | :--- | :--- | :--- |
-| `PRIMARY_AI_PROVIDER` | No | `gemini` | Primary engine for extraction and briefings (`gemini`, `ollama`, or `mock`). |
-| `FALLBACK_AI_PROVIDER`| No | `ollama` | Fallback engine if primary is unreachable. |
-| `GEMINI_API_KEY` | No | None | Cloud credentials for Google Gemini API. |
-| `OLLAMA_BASE_URL` | No | `http://localhost:11434` | Endpoint for local Ollama server. |
-| `OLLAMA_MODEL` | No | `mistral` | LLM tag used by Ollama. |
-| `DB_PATH` | No | `backend/nexus.db` | Absolute or relative path to SQLite database. |
-
----
-
-## 3. Step-by-Step Installation
-
-### 3.1 Initialize Backend Service
+### 1.1 Backend Container
+Build and run the FastAPI backend:
 ```bash
-# Clone the repository
-git clone https://github.com/your-repo/nexus.git
-cd nexus/backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run migrations and seed baseline network
-python scripts/seed_db.py
-```
-
-### 3.2 Initialize Frontend Service
-```bash
-cd ../frontend
-npm install
-```
-
----
-
-## 4. Local Execution Commands
-
-### 4.1 Start the Backend REST Server
-```bash
+# Build the backend container from the backend directory
 cd backend
-source venv/bin/activate
-uvicorn backend.app.main:app --reload --port 8000
-```
--   Swagger Interactive API Documentation: `http://localhost:8000/docs`
--   ReDoc static references: `http://localhost:8000/redoc`
+docker build -t nexus-backend .
+cd ..
 
-### 4.2 Start the React UI Client
-```bash
-cd frontend
-npm run dev
+# Run the backend container on port 8000
+docker run -d -p 8000:8080 --name nexus-api \
+  -e GEMINI_API_KEY="your_api_key_here" \
+  -e PRIMARY_AI_PROVIDER="gemini" \
+  -e LOG_LEVEL="INFO" \
+  -e APP_ENV="production" \
+  nexus-backend
 ```
-Open your browser at `http://localhost:5173`.
+-   **Note:** The backend automatically checks if `nexus.db` is missing or empty on startup. If so, it seeds the 33-node network baseline automatically.
+
+### 1.2 Frontend Container
+Build and run the static Vite frontend:
+```bash
+# Build the frontend container using Node builder and Nginx runtime
+docker build -t nexus-frontend \
+  --build-arg VITE_API_URL="http://localhost:8000/api" \
+  -f frontend/Dockerfile ./frontend
+
+# Run the frontend container on port 8080
+docker run -d -p 8080:8080 --name nexus-ui nexus-frontend
+```
 
 ---
 
-## 5. Production Cloud Deployment Strategy
+## 2. Multi-Container Orchestration (Docker Compose)
 
-To deploy NEXUS in a production cloud environment, we recommend the following Google Cloud Platform (GCP) target architecture:
+Docker Compose allows you to spin up the entire integrated ecosystem (frontend and backend) locally in production configuration.
 
-### 5.1 Backend Deployment (Google Cloud Run)
-FastAPI backend can be packaged as a Docker container and deployed serverless using **Google Cloud Run**:
--   **Execution:** Containerized execution with autoscaling.
--   **Security:** Private VPC connector to interface with databases.
--   **Artifact Registry:** Used to store container builds.
+### 2.1 Start Orchestration
+From the root directory, run:
+```bash
+docker compose up --build -d
+```
 
-### 5.2 Database Layer (Google Cloud SQL)
-For production scalability, replace the local SQLite file with a managed **Google Cloud SQL for PostgreSQL** instance. 
--   Replace the `SQLiteRepository` with a PostgreSQL connection pool adapter.
--   Run database migrations using tools like Alembic.
+### 2.2 Verify Local Execution Ports
+-   **Frontend Console:** Available at `http://localhost:8080`
+-   **Backend API Documentation:** Available at `http://localhost:8000/docs`
+-   **Local AI Fallback Route:** Configured to map `host.docker.internal` so the containerized backend can query an Ollama instance running natively on the host machine.
 
-### 5.3 AI Layer (Vertex AI / Gemini API)
-In production, lock Vertex AI with Google Enterprise credentials:
--   Configure Service Account credentials.
--   Direct requests to Google Vertex AI endpoints instead of standard developer SDK keys.
+---
 
-### 5.4 Frontend Deployment (Firebase Hosting / Cloud Storage CDN)
-The compiled static assets (`frontend/dist`) can be hosted serverless on:
--   **Google Cloud Storage (GCS)** configured as a public website behind a Cloud Load Balancer.
--   **Firebase Hosting** for global CDN delivery.
+## 3. Google Cloud Run Deployment
+
+Google Cloud Run provides a serverless execution environment for containerized services. Follow these steps to build and deploy NEXUS.
+
+### 3.1 Setup Artifact Registry
+Create repositories for the frontend and backend Docker images:
+```bash
+# Set variables
+PROJECT_ID="your-gcp-project-id"
+REGION="us-central1"
+
+# Create registry repository for backend
+gcloud artifacts repositories create nexus-repo \
+    --repository-format=docker \
+    --location=$REGION \
+    --description="NEXUS Docker Registry"
+```
+
+### 3.2 Build and Push Images using Cloud Build
+Use Cloud Build to build and push container images to your registry:
+```bash
+# Build backend image from the backend directory
+cd backend
+gcloud builds submit --tag $REGION-docker.pkg.dev/$PROJECT_ID/nexus-repo/backend:latest .
+cd ..
+
+# Build frontend image (specify backend URL build argument)
+BACKEND_URL="https://nexus-backend-xxxxx-uc.a.run.app"
+gcloud builds submit --tag $REGION-docker.pkg.dev/$PROJECT_ID/nexus-repo/frontend:latest \
+    --config=cloudbuild-frontend.yaml \
+    ./frontend
+```
+*(See section 3.5 for frontend build configurations)*
+
+### 3.3 Deploy Backend to Cloud Run
+Deploy the backend API service:
+```bash
+gcloud run deploy nexus-backend \
+    --image=$REGION-docker.pkg.dev/$PROJECT_ID/nexus-repo/backend:latest \
+    --platform=managed \
+    --region=$REGION \
+    --allow-unauthenticated \
+    --set-env-vars="PRIMARY_AI_PROVIDER=gemini,GEMINI_API_KEY=your_api_key_here,APP_ENV=production,CORS_ORIGINS=https://nexus-frontend-xxxxx-uc.a.run.app"
+```
+Record the resulting **Service URL** of the backend (e.g., `https://nexus-backend-xxxxx-uc.a.run.app`).
+
+### 3.4 Deploy Frontend to Cloud Run
+Deploy the frontend static server:
+```bash
+gcloud run deploy nexus-frontend \
+    --image=$REGION-docker.pkg.dev/$PROJECT_ID/nexus-repo/frontend:latest \
+    --platform=managed \
+    --region=$REGION \
+    --allow-unauthenticated
+```
+
+### 3.5 Cloud Build Frontend Configuration
+For building the frontend with the `VITE_API_URL` build argument via Cloud Build, use the following `cloudbuild-frontend.yaml` configuration:
+```yaml
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '--build-arg', 'VITE_API_URL=https://nexus-backend-xxxxx-uc.a.run.app/api',
+      '-t', 'us-central1-docker.pkg.dev/your-gcp-project-id/nexus-repo/frontend:latest',
+      '-f', 'Dockerfile',
+      '.'
+    ]
+images:
+  - 'us-central1-docker.pkg.dev/your-gcp-project-id/nexus-repo/frontend:latest'
+```
+
+---
+
+## 4. Production Environment Variables Reference
+
+Configure these environment variables in the Cloud Run console under **Variables & Secrets**:
+
+### 4.1 Backend Service Variables
+-   **`GEMINI_API_KEY` (Required in Cloud):** Google Gemini API developer key.
+-   **`PRIMARY_AI_PROVIDER` (Default: `gemini`):** Instructs the app to use Google Gemini for processing. Do not use `ollama` in Cloud Run.
+-   **`APP_ENV` (Default: `production`):** Sets running mode.
+-   **`LOG_LEVEL` (Default: `INFO`):** Controls logging verbosity.
+-   **`CORS_ORIGINS`:** Production frontend Cloud Run URL (e.g., `https://nexus-frontend-xxxxx-uc.a.run.app`).
+
+### 4.2 Frontend Build Variables
+-   **`VITE_API_URL`:** Complete URL pointing to the deployed backend Cloud Run service, suffixing the `/api` route.
+
+---
+
+## 5. Revision Rollbacks
+
+If a deployment revision contains a regression, you can rollback immediately to a previous healthy revision using the gcloud CLI:
+
+```bash
+# List all revisions for a service
+gcloud run revisions list --service=nexus-backend --region=$REGION
+
+# Route 100% of traffic back to a specific revision ID
+gcloud run services update-traffic nexus-backend \
+    --to-revisions=nexus-backend-00002-xyz=100 \
+    --region=$REGION
+```
+
+---
+
+## 6. Troubleshooting Deployment Issues
+
+### 6.1 Database Verification
+If you suspect the database failed to seed:
+1. Check Cloud Run service log stream.
+2. Search for the log: `[DATABASE] SQLite database file missing or empty at '...'. Seeding database automatically...`
+3. Look for the completion confirmation: `[DATABASE] Database seeded successfully.`
+
+### 6.2 CORS Outages
+If nodes fail to render or news alert submissions return connection errors:
+- Open browser developer tools (F12) and inspect Console warnings.
+- If CORS errors appear, verify that the backend's `CORS_ORIGINS` environment variable matches the exact URL (including `https://` prefix, excluding trailing slash) of the frontend service.
+
+### 6.3 Missing Gemini Key
+If news alerts analyze indefinitely and return errors:
+- Verify that `GEMINI_API_KEY` is correctly defined in the Cloud Run service variables.
+- Ensure the key is active and has sufficient quota allocations.

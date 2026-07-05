@@ -1,13 +1,16 @@
 import { useMemo } from "react";
-import type { 
-  GraphResponse, 
-  MetricsResponse, 
-  RiskEvent, 
-  SimulationRun, 
-  RecommendationBundle 
+import type {
+  GraphResponse,
+  MetricsResponse,
+  RiskEvent,
+  SimulationRun,
+  RecommendationBundle
 } from "../types";
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = (
+  import.meta.env.VITE_API_URL ||
+  "https://nexus-api-357869022312.asia-south1.run.app"
+).replace(/\/$/, "");
 
 export const useNexusApi = () => {
   return useMemo(() => {
@@ -19,66 +22,87 @@ export const useNexusApi = () => {
         },
         ...options,
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `HTTP error! Status: ${response.status}`);
+        throw new Error(errorData.detail || `HTTP ${response.status}`);
       }
-      
+
       return response.json() as Promise<T>;
     };
 
     return {
-      /** Fetch Digital Twin Nodes and Edges */
-      getGraphTopology: () => fetchJson<GraphResponse>("/graph/"),
+      /** Digital Twin Graph */
+      getGraphTopology: () =>
+        fetchJson<GraphResponse>("/api/graph/"),
 
-      /** Fetch live dashboard metrics */
-      getDashboardMetrics: () => fetchJson<MetricsResponse>("/metrics/"),
+      /** Dashboard KPIs */
+      getDashboardMetrics: () =>
+        fetchJson<MetricsResponse>("/api/metrics/"),
 
-      /** List all historical/active events */
-      listEvents: () => fetchJson<RiskEvent[]>("/events/"),
+      /** All Risk Events */
+      listEvents: () =>
+        fetchJson<RiskEvent[]>("/api/events/"),
 
-      /** Fetch a single event metadata */
-      getEvent: (eventId: string) => fetchJson<RiskEvent>(`/events/${eventId}`),
+      /** Single Event */
+      getEvent: (eventId: string) =>
+        fetchJson<RiskEvent>(`/api/events/${eventId}`),
 
-      /** Ingest news to extract and trigger full simulation flow */
-      ingestNews: (newsText: string) => 
-        fetchJson<RiskEvent>("/events/", {
+      /** Ingest News */
+      ingestNews: (newsText: string) =>
+        fetchJson<RiskEvent>("/api/events/", {
           method: "POST",
-          body: JSON.stringify({ news_text: newsText })
+          body: JSON.stringify({
+            news_text: newsText,
+          }),
         }),
 
-      /** Get simulation timeline steps for an event */
-      getImpactTimeline: (eventId: string) => 
-        fetchJson<SimulationRun>(`/events/${eventId}/impact`),
+      /** Simulation Timeline */
+      getImpactTimeline: (eventId: string) =>
+        fetchJson<SimulationRun>(`/api/events/${eventId}/impact`),
 
-      /** Get optimization scoring and Gemini briefings for an event */
-      getRecommendations: (eventId: string) => 
-        fetchJson<RecommendationBundle>(`/events/${eventId}/decision`),
+      /** Recommendations */
+      getRecommendations: (eventId: string) =>
+        fetchJson<RecommendationBundle>(`/api/events/${eventId}/decision`),
 
-      /** Execute a mitigation playbook rerouting action */
-      applyMitigation: (eventId: string, optionId: string) => 
-        fetchJson<{ status: string; message: string }>(`/events/${eventId}/decision/mitigate`, {
-          method: "POST",
-          body: JSON.stringify({ option_id: optionId })
-        }),
+      /** Apply Mitigation */
+      applyMitigation: (eventId: string, optionId: string) =>
+        fetchJson<{ status: string; message: string }>(
+          `/api/events/${eventId}/decision/mitigate`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              option_id: optionId,
+            }),
+          }
+        ),
 
-      /** Reset the entire Digital Twin graph back to default baseline */
-      resetSystem: () => 
-        fetchJson<{ status: string; message: string }>("/events/system/reset", {
-          method: "POST"
-        }),
+      /** Reset System */
+      resetSystem: () =>
+        fetchJson<{ status: string; message: string }>(
+          "/api/events/system/reset",
+          {
+            method: "POST",
+          }
+        ),
 
-      /** Get active AI engine provider state */
-      getAiStatus: () => 
-        fetchJson<{ provider: string }>("/events/system/ai-status"),
+      /** AI Provider Status */
+      getAiStatus: () =>
+        fetchJson<{ provider: string }>(
+          "/api/events/system/ai-status"
+        ),
 
-      /** Ask natural language questions about active digital twin state */
-      askQuestion: (question: string) => 
-        fetchJson<{ answer: string }>("/events/system/ask", {
-          method: "POST",
-          body: JSON.stringify({ question })
-        })
+      /** Ask NEXUS */
+      askQuestion: (question: string) =>
+        fetchJson<{ answer: string }>(
+          "/api/events/system/ask",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              question,
+            }),
+          }
+        ),
     };
   }, []);
 };

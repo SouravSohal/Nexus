@@ -5,8 +5,12 @@ def setup_logging() -> logging.Logger:
     """
     Sets up a standardized logger for the NEXUS platform.
     """
+    from backend.app.core.config import settings
+    log_level_str = settings.LOG_LEVEL.upper()
+    log_level = getattr(logging, log_level_str, logging.INFO)
+    
     logger = logging.getLogger("nexus")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(log_level)
     
     # Avoid duplicate handlers if already initialized
     if not logger.handlers:

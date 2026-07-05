@@ -13,10 +13,10 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Configure CORS for local development
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permits access from local Vite servers (typically http://localhost:5173)
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

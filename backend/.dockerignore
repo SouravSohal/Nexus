@@ -1,0 +1,17 @@
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.env
+.env.*
+nexus.db
+nexus.db-journal
+nexus.db-wal
+nexus.db-shm
+Dockerfile
+.dockerignore

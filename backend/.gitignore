@@ -1,0 +1,30 @@
+# Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Databases and temporary database files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+nexus.db
+
+# Secrets and local configurations
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
